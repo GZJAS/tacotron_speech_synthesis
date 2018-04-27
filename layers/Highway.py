@@ -24,6 +24,7 @@ class HighwayLayer(tf.keras.Model):
         # up/down-sample if the dimensionality of input does not match highway layer size
         if input_.get_shape()[-1] != self.num_units:
             input_ = self.pre_highway(input_)
+
         H_out = self.H(input_)
         T_out = self.T(input_)
 
