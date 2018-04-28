@@ -26,7 +26,7 @@ class Prenet(tf.keras.Model):
         """
         # output of sampling layer
         output_ = self.sampling_layer(input_)
-        
+
         # output of prenet layers
         for idx in range(len(self.prenet_layers)):
             output_ = self.prenet_dropout(self.prenet_layers[idx](output_), training=training)
