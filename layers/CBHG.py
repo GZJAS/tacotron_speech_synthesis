@@ -116,7 +116,6 @@ class CBHG(tf.keras.Model):
         conv_projection_output = self.conv_projection_2(self.conv_projection_1(convbank_output))
 
         # residual connections
-
         conv_projection_output += self.residual_sampling(input_)
 
         # output of highway network
