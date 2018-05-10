@@ -3,42 +3,27 @@
 import tensorflow as tf
 
 
-class HighwayNetwork(tf.keras.Model):
-    """Highway network
+def HighwayNetwork(input_, num_units, num_layers):
+    """Highway Network
     """
-    def __init__(self, num_units, num_layers):
-        """Constructor
-        """
-        super(HighwayNetwork, self).__init__()
+    output_ = tf.keras.layers.Dense(units=num_units)(input_)
+    for idx in range(num_layers):
+        # H
+        transformed = tf.keras.layers.Dense(units=num_units, activation=tf.nn.relu)(input_)
 
-        self.num_layers = num_layers
-        self.num_units = num_units
+        # T
+        gate = tf.keras.layers.Dense(units=num_units, activation=tf.nn.sigmoid,
+                                     bias_initializer=tf.keras.initializers.Constant(-1.0))(output_)
+        
+        # 1.0 - T
+        negated_gate = tf.keras.layers.Lambda(lambda x: 1.0 - x, output_shape=(num_units, ))(gate)
 
-        self.sampling_layer = tf.keras.layers.Dense(units=num_units)
+        # H * T
+        transform_gated = tf.keras.layers.Multiply()([gate, transformed])
+        # input * (1.0 - T)
+        identity_gated = tf.keras.layers.Multiply()([negated_gate, output_])
 
-        self.Hs = []
-        self.Ts = []
+        # final output = H * T + input * (1.0 - T)
+        output_ = tf.keras.layers.Add()([transform_gated, identity_gated])
 
-        for idx in range(self.num_layers):
-            self.Hs.append(tf.keras.layers.Dense(units=num_units, activation=tf.nn.relu))
-            self.Ts.append(tf.keras.layers.Dense(units=num_units, activation=tf.nn.sigmoid,
-                           bias_initializer=tf.constant_initializer(-1.0)))
-
-    def call(self, input_):
-        """ Run the model
-            Args:
-                 input_: 3-D tensor of shape [batch_size, timesteps, input_dim]
-             Returns:
-                 output_: 3-D tensor of shape [batch_size, timesteps, num_units]
-        """
-        # output of sampling layer
-        output_ = self.sampling_layer(input_)
-
-        # output of highway layers
-        for idx in range(self.num_layers):
-            H_out = self.Hs[idx](output_)
-            T_out = self.Ts[idx](output_)
-
-            output_ = H_out * T_out + output_ * (1.0 - T_out)
-
-        return output_
+    return output_
