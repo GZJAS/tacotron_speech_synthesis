@@ -3,19 +3,11 @@
 import tensorflow as tf
 
 
-class EmbeddingLayer(tf.keras.Model):
-    """Embedding Layer
+def EmbeddingLayer(input_, vocab_size, embedding_dim):
+    """Embedding layers
     """
-    def __init__(self, vocab_size, embedding_dim):
-        """Constructor
-        """
-        self.embedding = tf.keras.layers.Embedding(input_dim=vocab_size, output_dim=embedding_dim)
+    output_ = tf.keras.layers.Embedding(input_dim=vocab_size, output_dim=embedding_dim,
+                                        embeddings_initializer=tf.truncated_normal_initializer(
+                                            mean=0.0, stddev=0.01))(input_)
 
-    def call(self, input_):
-        """Run the model
-            Args:
-                 input_: 2-D tensor of shape [batch_size, timesteps]
-             Returns:
-                 output_: 3-D tensor of shape [batch_size, timesteps, embedding_dim]
-        """
-        return self.embedding(input_)
+    return output_
