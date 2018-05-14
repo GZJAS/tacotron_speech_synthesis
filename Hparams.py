@@ -41,7 +41,7 @@ Hparams = tf.contrib.training.HParams(
 
     # attention decoder
     attn_gru_size=256,
-    dec_num_layers=2,
+    num_dec_gru_layers=2,
     dec_gru_size=256,
 
     # postnet CBHG
