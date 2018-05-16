@@ -29,7 +29,7 @@ def encoder(input_):
 def decoder(input_, memory):
     """Attention based decoder
         Args:
-            input_: 3-D tensor of shape [batch_size, T_y//r, n_mels*r]; shifted (reshped) log melspectrogram
+            input_: 3-D tensor of shape [batch_size, T_y//r, n_mels*r]; shifted (reshaped) log melspectrogram
             memory: 3-D tensor of shape [batch_size, T_x, 2*enc_CBHG_gru_size]; encoder output
             returns: 3-D tensor of shape [batch_size, T_y//r, n_mels*r]; predicted (reshaped) log melspectrogram
     """
@@ -38,16 +38,17 @@ def decoder(input_, memory):
 
     # attention decoder
     attn_dec_out, state = AttentionDecoder(dec_prenet_out, memory, attn_gru_size=hp.attn_gru_size)
-
+    
     # alignments
     alignments = tf.transpose(state.alignment_history.stack(), [1, 2, 0])
 
     # residual decoder GRUs
     for _ in range(hp.num_dec_gru_layers):
-        attn_dec_out += tf.keras.layers.GRU(units=hp.dec_gru_size)(attn_dec_out)
+        dec_out = tf.keras.layers.GRU(units=hp.dec_gru_size)(attn_dec_out)
+        attn_dec_out = tf.keras.layers.Add()([attn_dec_out, dec_out])
 
     # final affine layer
-    mel_hats = tf.keras.layers.Dense(units=hp.n_mels * hp.r)
+    mel_hats = tf.keras.layers.Dense(units=hp.n_mels * hp.r)(attn_dec_out)
 
     return mel_hats, alignments
 
@@ -59,7 +60,7 @@ def postnet(input_):
             returns: 3-D tensor of shape [batch_size, T_y, 1+n_fft//2]; predicted log magnitude spectrogram
     """
     # reshape log melspectrogram
-    input_ = tf.reshape(input_, [tf.shape(input_)[0], -1, hp.n_mels])
+    input_ = tf.reshape(input_, [input_.shape[0], -1, hp.n_mels])
 
     # post-net CBHG
     post_CBHG_out = CBHG(input_, K=hp.post_CBHG_K, c=hp.post_CBHG_c, maxpool_width=hp.post_CBHG_maxpool_width,
